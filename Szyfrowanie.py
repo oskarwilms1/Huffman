@@ -1,91 +1,118 @@
-from collections import deque
-# Definicja węzła, który będzie głównym obiektem na którym będę wykonywał wszyskie operacje.
-# Postanowiłem, że węzły będą występować w dwóch typach:
-# Typ 1:
-# Węzeł nieprawidłowy, czyli taki "udawany" węzeł, który nie posiada jeszcze left i right.
-# Typ 2:
-# Węzeł prawidłowy, czyli taki który posiada left i right.
+#Podstawowa definicja węzła, dziele go na dwa typy (umownie):
+#Typ 1: Węzęł nieprawidłowy (nie posiada prawego i lewego)
+#Typ 2: Węzęł prawidłowy (posiada prawy i lewy)
 
 class Węzęł:
-    def __init__(self,label,frequency):
-        self.label = label
-        self.left = None
-        self.right = None
-        self.frequency = frequency
-        self.parent = None
-    def setParent(node):
-        parent = node
-    def setLeft(node):
-        left = node
-    def setRight(node):
-        right = node
-    def increaseFrequency():
-        frequency += 1
-    def __lt__():
-        pass
-def getNameFromUser():
-# Pytam o nazwę pliku użytkownika ??? muszę zapytać się o to
-    fileName=input("Wpisz nazwę pliku wraz z jego rozszerzeniem.\n")
-    try:
-        file = open(fileName, "r") 
-    except Exception as e:
-        print(e)
-    return file
-def convertFiletoString(file):
-    FileContent = file.read()
-    return FileContent
-def calculateFrequencies(file_content,DictOfLetters : dict):
-    for letter in file_content:
-        if letter not in DictOfLetters:
-            DictOfLetters.update({letter:1})
-        else:
-            DictOfLetters[letter] += 1
-def convertDictToList(DictOfLetters):
-    ListOfLetters = []
-    for letter in list(DictOfLetters.keys()):
-        ListOfLetters.append(letter+str(DictOfLetters[letter]))
-    return ListOfLetters
+    def __init__(self,labelka,czestotliwosc,lewy=None,prawy=None):
+        self.labelka = labelka
+        self.czestotliwosc = czestotliwosc
+        self.prawy = prawy
+        self.lewy = lewy
+        self.code = ''
+    def __lt__(self,other):
+        return self.czestotliwosc < other.czestotliwosc
+    def zwiększCzestotliwosc(self):
+        self.czestotliwosc += 1
+#Definiuje potrzebne funkcje
 
-def heapify(ListOfLetters,length,index):
-    smallest = index
-    left = 2 * index + 1  
-    right = 2 * index + 2  
+def min_heapify(lista,dlugosc,index):
+    najmniejszy_index = index
+    lewy = 2 * index + 1
+    prawy = 2 * index + 2
 
+    if lewy < dlugosc and lista[lewy] < lista[najmniejszy_index]:
+        najmniejszy_index = lewy
+
+    if prawy < dlugosc and lista[prawy] < lista[najmniejszy_index]:
+        najmniejszy_index = prawy
     
-    if left < length and int(ListOfLetters[left][1]) < int(ListOfLetters[smallest][1]):
-        smallest = left
-
+    if najmniejszy_index != index:
+        lista[index],lista[najmniejszy_index] = lista[najmniejszy_index],lista[index]
+        min_heapify(lista,dlugosc,najmniejszy_index)
+def build_heap(lista):
+    dlugosc = len(lista)
+    for index in range(dlugosc // 2 - 1, -1, -1):
+        min_heapify(lista,dlugosc,index)
+def Huffman(lista):
+    Kolejka = lista
+    dlugosc = len(lista)
+    for i in range(1,dlugosc):
+        Kolejka[0],Kolejka[-1] = Kolejka[-1],Kolejka[0]
+        lewy = Kolejka.pop()
+        min_heapify(Kolejka,dlugosc-i,0)
+        prawy = Kolejka[0]
+        czestotliwosc = lewy.czestotliwosc + prawy.czestotliwosc
+        Kolejka[0] = Węzęł(lewy.labelka+prawy.labelka,czestotliwosc,lewy,prawy)
+        min_heapify(Kolejka,dlugosc-i,0)
+        #ListaWszystkich.append(Węzęł(lewy.labelka+prawy.labelka,czestotliwosc))
+    return Kolejka[0]
+def encode(wezel,WszystkieKody):
     
-    if right < length and int(ListOfLetters[right][1]) < int(ListOfLetters[smallest][1]):
-        smallest = right
+    if wezel.lewy != None:
+        wezel.lewy.code = wezel.code + '0'
+        encode(wezel.lewy,WszystkieKody)
+    if wezel.prawy != None:
+        wezel.prawy.code = wezel.code +'1'
+        encode(wezel.prawy,WszystkieKody)
+    if wezel.lewy == None and wezel.prawy == None:
+        WszystkieKody.update({wezel.code:wezel.labelka})
+    return WszystkieKody
+def write_binary_strings_to_file(strings, filename):
+    with open(filename, 'wb') as f:
+        for binary_string in strings:
+            # Konwertujemy łańcuch binarny na wartość całkowitą
+            integer_value = int(binary_string, 2)
+            # Otrzymujemy długość łańcucha binarnego
+            length = len(binary_string)
+            
+            # Pakujemy długość oraz wartość całkowitą do bajtów
+            length_byte = length.to_bytes(1, byteorder='big')
+            value_bytes = integer_value.to_bytes((length + 7) // 8, byteorder='big')
 
-    
-    if smallest != index:
-        ListOfLetters[index], ListOfLetters[smallest] = ListOfLetters[smallest], ListOfLetters[index]  
+            # Zapisujemy bajty długości oraz wartości do pliku
+            f.write(length_byte)
+            f.write(value_bytes)
+#Definiuje zmienne
 
-        heapify(ListOfLetters, length, smallest)
+ListaWezlow = []
+SłownikLiter = {} # Słownik zawiera informacje o częstotliwości
+ListaLiter = []
 
-def build_min_heap(ListOfLetters):
-    length = len(ListOfLetters)
-    
-    for i in range(length-1,-1,-1):
-        heapify(ListOfLetters,length,i)
-def Huffman(ListOfLetters):
-    Q = deque(ListOfLetters)
-    pass
+#Odczytuje plik podany przez użytkownika i zapisuje go w liście
 
+try:
+    plik = open(input("Podaj nazwe pliku z jego rozszerzeniem: "),"r",encoding="utf-8")
+    Zawartosc = plik.read()
+except:
+    print("Błędna nazwa pliku")
 
-def main():
+#Tworze węzły "nieprawidłowe" i dodaje je do listy wszyskich węzłów
 
-    DictOfLetters = {}
-    content = convertFiletoString(getNameFromUser())
-    calculateFrequencies(content,DictOfLetters)
-    ListOfLetters = convertDictToList(DictOfLetters)
-    build_min_heap(ListOfLetters)
-    print(DictOfLetters)
-    print(ListOfLetters)
-    
+for litera in Zawartosc:
+    if litera not in ListaLiter:
+        ListaLiter.append(litera)
+        SłownikLiter.update({litera : 1})     
+    else:
+       SłownikLiter[litera] += 1
+for litera in ListaLiter:
+    ListaWezlow.append(Węzęł(litera,SłownikLiter[litera]))
 
+#Buduję kopiec
+build_heap(ListaWezlow)
 
-if __name__ == "__main__":
-    main()
+ZłączenieWęzłów = Huffman(ListaWezlow)
+Kody = {}
+encode(ZłączenieWęzłów,Kody)
+Kodyv2 = {y: x for x, y in Kody.items()}
+#print(Kody)
+#print(Kodyv2)
+
+ZakodowanyTekst= []
+for litera in Zawartosc:
+    ZakodowanyTekst.append(Kodyv2[litera])
+
+Wzór = str(Kody)
+write_binary_strings_to_file(ZakodowanyTekst, "zaszyfrowane.txt")
+f = open('Wzór.txt','w')
+f.write(Wzór+"\n") # write new content at the beginning
+f.close()
