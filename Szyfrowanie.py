@@ -114,5 +114,5 @@ for litera in Zawartosc:
 Wzór = str(Kody)
 write_binary_strings_to_file(ZakodowanyTekst, "zaszyfrowane.txt")
 f = open('Wzór.txt','w')
-f.write(Wzór+"\n") # write new content at the beginning
+f.write(Wzór+"\n")
 f.close()
