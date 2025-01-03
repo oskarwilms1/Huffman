@@ -1,30 +1,48 @@
-with open("wzór.txt","r") as wzor:
-    Wzór = eval(wzor.read())
+import json
 
-binary_strings = []
-with open('zaszyfrowane.txt', 'rb') as f:
-    while True:
-        # Odczytujemy bajt długości
-        length_byte = f.read(1)
-        if not length_byte:
-            break  # Koniec pliku
+def decode(codes, bit_stream):
+    
+    reverse_codes = {code: char for char, code in codes.items()}
+    
+    decoded_string = []
+    current_code = ""
 
-        length = int.from_bytes(length_byte, byteorder='big')
-        value_bytes = f.read((length + 7) // 8)  # Odczytujemy odpowiednią ilość bajtów
+    for bit in bit_stream:
+        current_code += bit
+        if current_code in reverse_codes:
+            decoded_string.append(reverse_codes[current_code])
+            current_code = ""
 
-        # Konwertujemy bajty z powrotem na wartość całkowitą
-        integer_value = int.from_bytes(value_bytes, byteorder='big')
-        # Przechodzimy na ciąg binarny
-        binary_string = bin(integer_value)[2:]  # Konwertujemy na binarny, pomijając '0b'
-        binary_string = binary_string.zfill(length)  # Dodajemy zera wiodące
+    return ''.join(decoded_string)
 
-        binary_strings.append(binary_string)
+def read_binary_strings_from_file(filename):
+    with open(filename, 'rb') as f:
+        
+        codes_str = f.readline().decode('utf-8').strip()
+        
+        codes = json.loads(codes_str)
 
-OdszyfrowanyTekst = ""
-for string in binary_strings:
-   OdszyfrowanyTekst = OdszyfrowanyTekst + Wzór[string]
-with open("odszyfrowane.txt","w",encoding="utf-8") as odszyfrowane:
-    odszyfrowane.write(OdszyfrowanyTekst)
+        
+        bit_stream = []
+        while True:
+            byte = f.read(1)
+            if not byte:
+                break
+            
+            bits = bin(int.from_bytes(byte, 'big'))[2:].zfill(8)  
+            bit_stream.extend(bits)  
+            
+    
+    return codes, ''.join(bit_stream)
 
 
     
+codes, bit_stream = read_binary_strings_from_file(input("Podaj nazwę pliku, z jego rozszerzeniem: "))
+decoded_data = decode(codes, bit_stream)
+
+
+with open("odszyfrowane.txt", "w", encoding="utf-8") as f:
+    f.write(decoded_data)
+
+    
+
